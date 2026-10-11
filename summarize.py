@@ -33,7 +33,7 @@ lines += ['', '*Steady-state float32 KV tensor storage, excluding metadata and t
           'Text and recall columns refer to separately trained models. Text NLL is nats per character.', '',
           'The text task predicts the next character on held-out Shakespeare text; it is not explicitly',
           'a memorization test. The retrieval task learns one random stored value amid random filler,',
-          'with only the answer supervised. See DESIGN.md for actual data examples.', '',
+          'with only the answer supervised. See archive/PILOT-HISTORY.md for actual data examples.', '',
           'The W=16 probe matches full attention on this simple retrieval task, including distances',
           '24 and 40 beyond its direct window. Its final-window recomputation has no source token:',
           'accuracy at distance 40 is '+
@@ -50,6 +50,6 @@ lines += ['', '*Steady-state float32 KV tensor storage, excluding metadata and t
           'establish a converged capability advantage or statistical equivalence.', '',
           f"Total timed training: {sum(r['training_seconds'] for r in data['results']):.1f} CPU wall seconds.",
           'These timings use dense masked attention; they are not sparse-kernel efficiency claims.',
-          'All trained checkpoints are retained under results/. See DESIGN.md for protocol and limits.']
+          'All trained checkpoints are retained under results/. See archive/PILOT-HISTORY.md for protocol and limits.']
 (root/'RESULTS.md').write_text('\n'.join(lines)+'\n')
 print('\n'.join(lines))

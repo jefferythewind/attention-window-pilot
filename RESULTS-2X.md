@@ -81,4 +81,4 @@ Matching exact-match accuracy need not mean matching answer NLL; both are report
 Dense attention masking does not establish sparse-kernel training savings.
 
 Raw metrics: [results-2x/runs.json](results-2x/runs.json).
-Protocol and reproduction command: [DESIGN.md](DESIGN.md#doubled-depth-and-context-experiment).
+Protocol and reproduction command: [archive/PILOT-HISTORY.md](archive/PILOT-HISTORY.md#doubled-depth-and-context-experiment).

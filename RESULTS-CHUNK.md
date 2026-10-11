@@ -130,4 +130,4 @@ Additional timed training: 585.8 seconds (24 new runs; reused full baselines exc
 The controls use one CPU thread, with the original optimizer schedule and update budgets.
 Training timing excludes evaluation and checkpoint writes. No sparse-kernel efficiency claim.
 
-Reproduction and protocol: [DESIGN.md](DESIGN.md#independently-chunk-trained-control).
+Reproduction and protocol: [archive/PILOT-HISTORY.md](archive/PILOT-HISTORY.md#independently-chunk-trained-control).

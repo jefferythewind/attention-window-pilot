@@ -1,0 +1,70 @@
+{
+  "version": "V1 hello world",
+  "sequence_length": 128,
+  "layers": 8,
+  "width": 48,
+  "heads": 4,
+  "max_positions": 512,
+  "seeds": [
+    515843,
+    363550,
+    519935,
+    354526,
+    292582,
+    57613
+  ],
+  "seed_selection": "random.Random(20261011).sample(range(100,1000000),6), selected before V1 training",
+  "training_data_seed_offset": 1000,
+  "validation_seed": 2026,
+  "batch_size": 16,
+  "text_steps": 200,
+  "probe_steps": 400,
+  "distances": [
+    8,
+    24,
+    48,
+    80
+  ],
+  "conditions": [
+    {
+      "name": "full-128",
+      "mode": "sliding",
+      "window": 128
+    },
+    {
+      "name": "sliding-32",
+      "mode": "sliding",
+      "window": 32
+    },
+    {
+      "name": "sliding-16",
+      "mode": "sliding",
+      "window": 16
+    },
+    {
+      "name": "sliding-8",
+      "mode": "sliding",
+      "window": 8
+    },
+    {
+      "name": "chunk-32",
+      "mode": "chunk",
+      "window": 32
+    }
+  ],
+  "optimizer": {
+    "name": "AdamW",
+    "peak_lr": 0.002,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "matrix_weight_decay": 0.1,
+    "min_lr_fraction": 0.1,
+    "warmup_steps": 20,
+    "grad_clip": 1.0
+  },
+  "dtype": "float32",
+  "threads_per_worker": 1,
+  "workers": 3
+}

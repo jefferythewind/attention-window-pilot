@@ -81,7 +81,7 @@ lines += ['', 'Seed order: '+', '.join(str(s) for s in data['args']['seeds'])+'.
           'Matching exact-match accuracy need not mean matching answer NLL; both are reported above.',
           'Dense attention masking does not establish sparse-kernel training savings.', '',
           'Raw metrics: [results-2x/runs.json](results-2x/runs.json).',
-          'Protocol and reproduction command: [DESIGN.md](DESIGN.md#doubled-depth-and-context-experiment).']
+          'Protocol and reproduction command: [archive/PILOT-HISTORY.md](archive/PILOT-HISTORY.md#doubled-depth-and-context-experiment).']
 path = ROOT/'RESULTS-2X.md'
 path.write_text('\n'.join(lines)+'\n')
 print('\n'.join(lines))

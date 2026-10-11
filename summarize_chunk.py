@@ -90,6 +90,6 @@ lines += ['## Interpretation and limits', '',
           f'Additional timed training: {additional_time:.1f} seconds (24 new runs; reused full baselines excluded).',
           'The controls use one CPU thread, with the original optimizer schedule and update budgets.',
           'Training timing excludes evaluation and checkpoint writes. No sparse-kernel efficiency claim.', '',
-          'Reproduction and protocol: [DESIGN.md](DESIGN.md#independently-chunk-trained-control).']
+          'Reproduction and protocol: [archive/PILOT-HISTORY.md](archive/PILOT-HISTORY.md#independently-chunk-trained-control).']
 (ROOT/'RESULTS-CHUNK.md').write_text('\n'.join(lines)+'\n')
 print('\n'.join(lines))
