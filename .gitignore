@@ -2,3 +2,5 @@
 __pycache__/
 results/*/pytorch_model.bin
 results-2x/*/pytorch_model.bin
+results-chunk/*/pytorch_model.bin
+results-2x-chunk/*/pytorch_model.bin

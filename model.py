@@ -84,10 +84,21 @@ class WindowLM(PreTrainedModel):
             elif past_key_values is not None:
                 raise ValueError('Supply absolute position_ids for an empty cache (W=1).')
             position_ids = torch.arange(start, start+input_ids.shape[1], device=input_ids.device)
-        x = self.token(input_ids) + self.position(position_ids)[None, :, :]
+        if position_ids.ndim == 2:
+            # Independent chunks can have different absolute offsets in each row.
+            # Attention distances within each row are still ordinary token offsets.
+            if use_cache or past_key_values is not None:
+                raise ValueError('Batched position offsets support independent chunks without caching.')
+            if position_ids.shape != input_ids.shape or not torch.all(position_ids[:, 1:]-position_ids[:, :-1] == 1):
+                raise ValueError('Each row needs contiguous absolute positions matching input_ids.')
+            x = self.token(input_ids) + self.position(position_ids)
+            attention_positions = torch.arange(input_ids.shape[1], device=input_ids.device)
+        else:
+            x = self.token(input_ids) + self.position(position_ids)[None, :, :]
+            attention_positions = position_ids
         caches = []
         for i, block in enumerate(self.blocks):
-            x, cache = block(x, position_ids,
+            x, cache = block(x, attention_positions,
                              None if past_key_values is None else past_key_values[i], use_cache)
             caches.append(cache)
         logits = self.head(self.norm(x))

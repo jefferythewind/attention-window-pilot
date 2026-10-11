@@ -4,7 +4,7 @@
 
 This experiment follows Timothy DeLise and Seth Cromelin’s [*Thinking Outside the Box: Retention and Transmission of Information in Sliding-Window KV Inference*](https://arxiv.org/abs/2609.34049) (arXiv:2609.34049, 2026). It asks whether training with restricted attention from the start lets a transformer learn to carry information beyond its immediate window.
 
-We trained four-layer, approximately 140K-parameter decoder-only transformers from scratch in PyTorch, with a minimal Hugging Face model interface. Every condition processed complete 64-token sequences with full backpropagation. Within each task and seed, initialization, ordered batches, and training-token budgets were identical; only the causal attention window changed. The CPU sweep used two paired seeds and took about 77 seconds of timed training.
+We trained four-layer, approximately 140K-parameter decoder-only transformers from scratch in PyTorch, with a minimal Hugging Face model interface. In the first sweep, every condition processed complete 64-token sequences with full backpropagation. Within each task and seed, initialization, ordered batches, and training-token budgets were identical; only the causal attention window changed. The CPU sweep used two paired seeds and took about 77 seconds of timed training.
 
 ## Preliminary results
 
@@ -26,6 +26,17 @@ These are early learning results, not evidence of converged general capability e
 The follow-up uses eight layers (approximately 254K parameters), 128-token sequences, windows 128/32/16/8, and retrieval distances 8/24/48/80. Update counts stay fixed, doubling processed tokens per run. At distance 80, W=32 achieves **100% in one seed but 60.9% in the other**, versus 100% for full attention in both. Its weaker seed also struggles at local distance 8, so the errors are not confined to long-range relay. Smaller windows still give lower early text loss on separately trained models.
 
 See [RESULTS-2X.md](RESULTS-2X.md) for the full sweep and controls, and [DESIGN.md](DESIGN.md#doubled-depth-and-context-experiment) for the reproduction command. The original results are preserved.
+
+## Independent-chunk training control
+
+We added 24 paired control runs, training on disconnected W-token blocks with full causal attention inside each block. Initial weights, original sequences, every prediction target (including boundaries), token budgets, and optimizer updates match the sliding-trained models.
+
+| Pilot and retrieval distance | Connected training + rolling | Chunk training + native chunks | Chunk training + rolling |
+|---|---:|---:|---:|
+| 4 layers, W=16, distance 40 | 100% | 13.3% | 13.3% |
+| 8 layers, W=32, distance 80 | 80.5% | 13.7% | 13.7% |
+
+These two-seed averages support a connected-training benefit for the toy long-range probe: switching chunk-trained models to rolling inference alone did not reproduce it. Native chunks often achieve lower early text loss, so retrieval gains do not imply improvement on every metric. See [RESULTS-CHUNK.md](RESULTS-CHUNK.md) for all training/inference combinations and [DESIGN.md](DESIGN.md#independently-chunk-trained-control) for the protocol, positional limitations, and reproduction command.
 
 ## Reproduce on CPU
 

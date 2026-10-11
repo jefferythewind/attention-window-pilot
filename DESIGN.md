@@ -197,6 +197,103 @@ saved under `results-2x/`, and the scaled report is [RESULTS-2X.md](RESULTS-2X.m
 Both sweeps' checkpoint binaries stay local; published JSON contains configurations,
 metrics and reproducibility metadata. No standard capability benchmarks are added.
 
+## Independently chunk-trained control
+
+This is the second type of control. The first recomputes the final window of a
+sliding-trained model from raw tokens, testing retained states at inference. The
+new control trains separate models on disconnected blocks with full causal
+attention inside each block, testing connected versus disconnected training.
+Both existing pilots receive controls for every restricted window and both seeds;
+full-window baselines are reused after checking one-chunk equivalence.
+
+For example, each original 128-token sequence becomes four independent 32-token
+blocks at W=32. The blocks are batched as separate model inputs. No keys, values,
+hidden states, or gradients through token representations cross block boundaries.
+All blocks share the same model parameters, and one optimizer update covers the
+same original batch of 16 sequences as the sliding-trained run. The complete
+original token stream, initialization, processed tokens, update counts, LR schedule,
+optimizer settings and supervised targets are matched. Hashes are verified against
+the recorded original runs, so the full and sliding models do not need retraining.
+
+Absolute position embeddings preserve original positions: blocks use 0..31,
+32..63, 64..95, and 96..127 in the example. Resetting each block's positions would
+introduce an additional positional-policy difference. `model.py` supports batched
+absolute offsets for independent chunks without allowing cross-chunk attention.
+Each chunk's attention mask is ordinary full causal attention. Maximum direct
+attention span matches W, but average available context is smaller after resets;
+attention-pair counts and training compute are not matched or claimed equal.
+
+### Targets at chunk boundaries
+
+The original next-token targets are retained, rather than dropping targets at
+block boundaries. A block's final output predicts the first token of the following
+block, as in a shifted next-token training recipe. That following token is a label;
+its representation is never supplied to the preceding block. Concatenating output
+logits in original sequence order before computing shifted cross-entropy preserves
+all 63 or 127 targets per original text sequence. Retrieval still supervises only
+the answer at the original query position. This also preserves the original
+loss normalization and gradient clipping across the entire optimizer batch.
+
+### Training versus inference matrix
+
+Each trained checkpoint is evaluated with both inference rules:
+
+| Training | Rolling inference | Independent-block inference |
+|---|---|---|
+| Connected sliding | Original evaluation | New evaluation of existing checkpoints |
+| Independent chunks | Transfer evaluation of new checkpoints | Native fixed-block control |
+
+All cells use the same held-out examples and target positions. Independent-block
+evaluation resets representations at aligned boundaries. Rolling evaluation uses
+the same local attention mask and retained-cache semantics as the original pilots,
+with cached/full-sequence logit equivalence checks. The transfer evaluation changes
+the chunk-trained models' inference regime and measures whether they relay without
+having trained on cross-block information paths.
+Because the probe supervises only the final answer, earlier independent chunks
+receive no training gradient in this task. Their learned absolute position
+embeddings consequently receive no gradient either. The rolling transfer test
+therefore changes both information paths and the use of positions outside the
+chunk-trained probe's supervised region. A follow-up using RoPE or fixed position
+embeddings would help separate that positional effect from learning to relay.
+
+Retrieval compares original query/answer positions, with a uniformly random value
+from eight alternatives. When the source lies in another independent block, it has
+no path to the query: chance performance is a structural expectation. Source-value
+counterfactuals must leave native query logits exactly unchanged in those cases.
+The query's future answer input cannot influence its prediction, despite batching
+the entire example for evaluation; causal masking is explicitly checked.
+
+The sliding/rolling versus chunk/chunks comparison tests practical performance of
+the two complete systems with the same maximum attention span. Sliding/rolling
+versus chunk/rolling keeps inference semantics fixed and tests connected training's
+contribution. These comparisons need not agree, and an advantage in retrieval does
+not imply an advantage in average text loss. Long-range success in native chunk
+evaluation is impossible here, so that comparison alone cannot establish that
+connected training is necessary for rolling inference to relay information.
+
+The controls use one CPU thread and the original float32 settings. There are 24
+new training runs across both pilots; full-window reference rows are reused.
+Checkpoints are saved locally in `results-chunk/` and `results-2x-chunk/`; raw JSON
+and the [comparison report](RESULTS-CHUNK.md) are published alongside the code.
+The control runner loads the existing original and doubled-pilot checkpoints.
+On a fresh clone, first run the original pilot and the doubled-depth/context
+command above to generate those checkpoint binaries, then run the controls:
+
+```bash
+.venv/bin/python checks_chunk.py
+.venv/bin/python chunk_control.py
+.venv/bin/python summarize_chunk.py
+```
+
+`checks_chunk.py` validates parallel/manual independent-block equivalence, zero
+cross-block influence, answer causality, full-block loss/gradient equivalence, and
+retention of every original prediction target. The data and initialization hashes,
+token/target counts and full-baseline equivalence are checked by the runner/report.
+Load checkpoints with `WindowLM.from_pretrained(path)`. Native disconnected
+behavior requires `chunk_logits(model, input_ids, W)` from `chunk_control.py`;
+calling the model directly on a complete longer sequence uses sliding attention
+and corresponds to the rolling transfer condition.
+
 ## Next stage on an RTX 3090
 
 First profile a 10-30M parameter model (e.g. 8 layers, width 256, 8 heads, a fixed
