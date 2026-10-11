@@ -1,6 +1,6 @@
 # Attention-window CPU pilot
 
-**A fourfold reduction in attention window preserved controlled long-range retrieval; separately trained text models showed no held-out loss penalty in this small pilot.**
+**In the initial 64-token pilot, a fourfold reduction in attention window preserved controlled long-range retrieval; separately trained text models showed no held-out loss penalty. A doubled-depth/context follow-up shows retrieval is less reliable across seeds.**
 
 This experiment follows Timothy DeLise and Seth Cromelin’s [*Thinking Outside the Box: Retention and Transmission of Information in Sliding-Window KV Inference*](https://arxiv.org/abs/2609.34049) (arXiv:2609.34049, 2026). It asks whether training with restricted attention from the start lets a transformer learn to carry information beyond its immediate window.
 
@@ -20,6 +20,12 @@ We trained four-layer, approximately 140K-parameter decoder-only transformers fr
 The 16-token-window probe achieved 100% retrieval at distances 4, 12, 24, and 40 in both seeds. At distance 40, recomputing only the final window gave approximately chance accuracy (12.5%); changing the stored value changed the model’s answer correctly. Smaller windows still succeeded at some shorter distances.
 
 These are early learning results, not evidence of converged general capability equivalence. Four local-attention layers have a maximum reach of `4 × (window − 1)` positions: 60 for the 16-token window. Forty is the longest distance tested. The dense masked training implementation does not establish sparse-attention compute savings.
+
+## Doubled depth and context
+
+The follow-up uses eight layers (approximately 254K parameters), 128-token sequences, windows 128/32/16/8, and retrieval distances 8/24/48/80. Update counts stay fixed, doubling processed tokens per run. At distance 80, W=32 achieves **100% in one seed but 60.9% in the other**, versus 100% for full attention in both. Its weaker seed also struggles at local distance 8, so the errors are not confined to long-range relay. Smaller windows still give lower early text loss on separately trained models.
+
+See [RESULTS-2X.md](RESULTS-2X.md) for the full sweep and controls, and [DESIGN.md](DESIGN.md#doubled-depth-and-context-experiment) for the reproduction command. The original results are preserved.
 
 ## Reproduce on CPU
 

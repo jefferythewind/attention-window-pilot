@@ -145,8 +145,8 @@ one direct window, and checkpoint save/load.
 
 Steady-state float32 KV tensor bytes per sequence are 2*L*(W-1)*width*4:
 96,768 / 23,040 / 10,752 / 4,608 for W=64 / 16 / 8 / 4. Metadata, activations,
-allocator overhead, and transient prefill concatenations are excluded. At the
-pilot's maximum prompt length the full model has not reached its steady capacity.
+allocator overhead, and transient prefill concatenations are excluded. The
+63-token retrieval prompt fills the full model's 63-key retained-cache capacity.
 `cache_kv_bytes` records actual resident KV tensors, with batch size supplied.
 
 Training uses a dense boolean local mask with PyTorch SDPA. This changes the
@@ -154,6 +154,48 @@ attention semantics but does not establish sparse-attention compute savings.
 Recorded training times exclude initialization, evaluation and checkpoint writes;
 they include batch creation and batch hashing. No inference latency or total
 process peak-memory claim is made by this pilot.
+
+## Doubled depth and context experiment
+
+The second CPU sweep doubles depth from 4 to 8 layers and sequence length from
+64 to 128 tokens. To preserve relative scales, windows become 128, 32, 16, 8 and
+retrieval distances become 8, 24, 48, 80. Width 48, four heads, learned position
+capacity 512, seeds 17 and 29, batch size 16, optimizer, LR schedule, and update
+counts (200 text / 400 retrieval) remain unchanged. All models are trained from
+scratch, with identical initial tensors and ordered batches across windows within
+each new task and seed. Data and initialization hashes are checked again.
+The scaled sweep uses one CPU thread for all conditions after a timing check
+found substantial threading overhead; the original used four. This runtime change
+is recorded in the metrics and also limits cross-pilot timing comparisons.
+
+Each text run now processes 409,600 tokens with 406,400 next-character targets;
+each retrieval run processes 819,200 tokens with 6,400 answer targets. Retaining
+the update counts doubles processed-token budgets relative to the first pilot.
+This is a joint scaling experiment, not an isolated depth effect or a comparison
+matched in processed tokens across pilots. Held-out text samples are regenerated
+at the new length using the same seed, so their positions and available context
+also differ from the first pilot.
+
+The text evaluation still uses 512 sequences, and retrieval still uses 256 examples
+per distance. Full-sequence training, cached-logit equivalence, final-window
+recomputation and changed-source controls are retained. With eight layers the
+structural horizons are 1,016, 248, 120 and 56 positions for W=128, 32, 16, 8.
+Distance 80 is reachable for W=16, but structurally unreachable for W=8.
+This test cannot establish effects at the maximum horizon for the larger windows.
+
+Run from the repository root after installing the dependencies above:
+
+```bash
+.venv/bin/python checks.py
+.venv/bin/python run.py --layers 8 --sequence-length 128 \
+  --windows 128 32 16 8 --distances 8 24 48 80 --threads 1 --output-dir results-2x
+.venv/bin/python summarize_scaled.py
+```
+
+The original command defaults are preserved. Scaled metrics and checkpoints are
+saved under `results-2x/`, and the scaled report is [RESULTS-2X.md](RESULTS-2X.md).
+Both sweeps' checkpoint binaries stay local; published JSON contains configurations,
+metrics and reproducibility metadata. No standard capability benchmarks are added.
 
 ## Next stage on an RTX 3090
 

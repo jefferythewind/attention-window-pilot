@@ -1,3 +1,4 @@
 .venv/
 __pycache__/
 results/*/pytorch_model.bin
+results-2x/*/pytorch_model.bin
