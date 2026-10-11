@@ -1,6 +1,9 @@
 # Attention-window CPU pilot
 
-Follow-up to [Thinking Outside the Box](https://arxiv.org/abs/2609.34049).
+Follow-up to Timothy DeLise and Seth Cromelin,
+[*Thinking Outside the Box: Retention and Transmission of Information in
+Sliding-Window KV Inference*](https://arxiv.org/abs/2609.34049)
+(arXiv:2609.34049, 2026).
 The paper's abstract motivates testing whether training with sliding windows improves
 information relay. This pilot trains models from scratch; it does not fine-tune the
 paper's pretrained models.
