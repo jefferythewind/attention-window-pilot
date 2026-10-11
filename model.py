@@ -1,0 +1,98 @@
+import math
+import torch
+from torch import nn
+from torch.nn import functional as F
+from transformers import PretrainedConfig, PreTrainedModel
+from transformers.modeling_outputs import CausalLMOutputWithPast
+
+
+class WindowConfig(PretrainedConfig):
+    model_type = 'window_pilot'
+
+    def __init__(self, vocab_size=64, width=64, layers=4, heads=4,
+                 window=64, max_positions=512, **kwargs):
+        super().__init__(**kwargs)
+        self.vocab_size, self.width, self.layers = vocab_size, width, layers
+        self.heads, self.window, self.max_positions = heads, window, max_positions
+        if window < 1 or layers < 1 or width % heads:
+            raise ValueError('Positive window/layers and width divisible by heads required.')
+
+
+class Block(nn.Module):
+    def __init__(self, c):
+        super().__init__()
+        self.c = c
+        self.ln1, self.ln2 = nn.LayerNorm(c.width), nn.LayerNorm(c.width)
+        self.qkv = nn.Linear(c.width, 3*c.width)
+        self.proj = nn.Linear(c.width, c.width)
+        self.mlp = nn.Sequential(nn.Linear(c.width, 4*c.width), nn.GELU(),
+                                 nn.Linear(4*c.width, c.width))
+
+    def forward(self, x, positions, past=None, use_cache=False):
+        b, t, d = x.shape
+        q, k, v = self.qkv(self.ln1(x)).reshape(b, t, 3, self.c.heads,
+                                              d//self.c.heads).permute(2, 0, 3, 1, 4)
+        kp = positions
+        if past is not None:
+            k = torch.cat((past[0], k), dim=2)
+            v = torch.cat((past[1], v), dim=2)
+            kp = torch.cat((past[2], positions))
+        distance = positions[:, None] - kp[None, :]
+        mask = (distance >= 0) & (distance < self.c.window)
+        y = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+        x = x + self.proj(y.transpose(1, 2).reshape(b, t, d))
+        x = x + self.mlp(self.ln2(x))
+        cache = None
+        if use_cache:
+            # W includes the current token; only W-1 past keys are needed.
+            keep = self.c.window - 1
+            cache = (k[:, :, -keep:] if keep else k[:, :, :0],
+                     v[:, :, -keep:] if keep else v[:, :, :0],
+                     kp[-keep:] if keep else kp[:0])
+        return x, cache
+
+
+class WindowLM(PreTrainedModel):
+    config_class = WindowConfig
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.token = nn.Embedding(config.vocab_size, config.width)
+        self.position = nn.Embedding(config.max_positions, config.width)
+        self.blocks = nn.ModuleList([Block(config) for _ in range(config.layers)])
+        self.norm = nn.LayerNorm(config.width)
+        self.head = nn.Linear(config.width, config.vocab_size, bias=False)
+        self.head.weight = self.token.weight
+        self.post_init()
+
+    def _init_weights(self, module):
+        if isinstance(module, (nn.Linear, nn.Embedding)):
+            nn.init.normal_(module.weight, std=0.02)
+            if isinstance(module, nn.Linear) and module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+    def forward(self, input_ids, labels=None, past_key_values=None,
+                position_ids=None, use_cache=False, **kwargs):
+        if kwargs.get('attention_mask') is not None:
+            raise ValueError('This pilot supports unpadded equal-length batches only.')
+        if self.training and (use_cache or past_key_values is not None):
+            raise ValueError('Training must retain the complete sequence graph.')
+        if position_ids is None:
+            start = 0
+            if past_key_values is not None and past_key_values[0][2].numel():
+                start = int(past_key_values[0][2][-1]) + 1
+            elif past_key_values is not None:
+                raise ValueError('Supply absolute position_ids for an empty cache (W=1).')
+            position_ids = torch.arange(start, start+input_ids.shape[1], device=input_ids.device)
+        x = self.token(input_ids) + self.position(position_ids)[None, :, :]
+        caches = []
+        for i, block in enumerate(self.blocks):
+            x, cache = block(x, position_ids,
+                             None if past_key_values is None else past_key_values[i], use_cache)
+            caches.append(cache)
+        logits = self.head(self.norm(x))
+        loss = None if labels is None else F.cross_entropy(
+            logits[:, :-1].reshape(-1, self.config.vocab_size), labels[:, 1:].reshape(-1),
+            ignore_index=-100)
+        return CausalLMOutputWithPast(loss=loss, logits=logits,
+                                     past_key_values=tuple(caches) if use_cache else None)
