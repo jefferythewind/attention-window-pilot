@@ -11,3 +11,6 @@ recurrent.log
 results-w32-horizon/*/pytorch_model.bin
 results-w32-horizon/progress-*.json
 w32-horizon.log
+results-lateral-slots/*/pytorch_model.bin
+results-lateral-slots/progress-*.json
+lateral-slots.log

@@ -10,11 +10,18 @@ class WindowConfig(PretrainedConfig):
     model_type = 'window_pilot'
 
     def __init__(self, vocab_size=64, width=64, layers=4, heads=4,
-                 window=64, max_positions=512, recurrent_attention_slot=False, **kwargs):
+                 window=64, max_positions=512, recurrent_attention_slot=False,
+                 recurrent_attention_slots: int = 1, recurrent_execution='sequential', **kwargs):
         super().__init__(**kwargs)
         self.vocab_size, self.width, self.layers = vocab_size, width, layers
         self.heads, self.window, self.max_positions = heads, window, max_positions
         self.recurrent_attention_slot = recurrent_attention_slot
+        self.recurrent_attention_slots = recurrent_attention_slots
+        self.recurrent_execution = recurrent_execution
+        if recurrent_execution not in ('sequential', 'diagonal'):
+            raise ValueError('recurrent_execution must be sequential or diagonal.')
+        if type(recurrent_attention_slots) is not int or recurrent_attention_slots not in (1, 2):
+            raise ValueError('recurrent_attention_slots must be 1 or 2.')
         if window < 1 or layers < 1 or width % heads:
             raise ValueError('Positive window/layers and width divisible by heads required.')
 
@@ -55,7 +62,8 @@ class Block(nn.Module):
     def recurrent_step(self, x, position, past=None):
         """One token; ordinary input KVs and completed-output state stay separate.
 
-        State is (ordinary K, ordinary V, positions, completed output, next position).
+        State is (ordinary K, ordinary V, positions, completed-output history,
+        next position). History is oldest first, with at most one or two entries.
         No state is detached: training retains the entire temporal graph.
         """
         b, t, d = x.shape
@@ -71,20 +79,24 @@ class Block(nn.Module):
         # Ordinary cache contains W-1 past inputs, so current-token inclusion gives W.
         keys, values = k, v
         if past is not None:
+            count = past[3].shape[1]
             kv = F.linear(self.ln1(past[3]), self.qkv.weight[d:], self.qkv.bias[d:])
-            extra_k, extra_v = kv.reshape(b, 1, 2, self.c.heads,
+            extra_k, extra_v = kv.reshape(b, count, 2, self.c.heads,
                                          d//self.c.heads).permute(2, 0, 3, 1, 4)
             keys = torch.cat((keys, extra_k), dim=2)
             values = torch.cat((values, extra_v), dim=2)
-        # Every supplied ordinary position is causal and within W. The extra slot
-        # participates in the same softmax and is omitted at sequence start.
+        # Every supplied ordinary position is causal and within W. Available
+        # recurrent slots share the same softmax; missing history is omitted.
         y = F.scaled_dot_product_attention(q, keys, values)
         z = x + self.proj(y.transpose(1, 2).reshape(b, 1, d))
         completed = z + self.mlp(self.ln2(z))
         keep = self.c.window-1
+        history = completed
+        if self.c.recurrent_attention_slots == 2 and past is not None:
+            history = torch.cat((past[3], completed), dim=1)[:, -2:]
         state = (k[:, :, -keep:] if keep else k[:, :, :0],
                  v[:, :, -keep:] if keep else v[:, :, :0],
-                 kp[-keep:] if keep else kp[:0], completed, position[-1]+1)
+                 kp[-keep:] if keep else kp[:0], history, position[-1]+1)
         return completed, state
 
 
@@ -141,22 +153,29 @@ class WindowLM(PreTrainedModel):
                 if len(past_key_values) != len(self.blocks):
                     raise ValueError('Expected one recurrent state per layer.')
                 for state in past_key_values:
-                    if len(state) != 5 or state[3].shape != (x.shape[0], 1, self.config.width):
+                    if (len(state) != 5 or state[3].ndim != 3 or
+                            state[3].shape[0] != x.shape[0] or
+                            state[3].shape[2] != self.config.width or
+                            not 1 <= state[3].shape[1] <= self.config.recurrent_attention_slots):
                         raise ValueError('Invalid recurrent state or batch size.')
                     if int(state[4]) != int(attention_positions[0]):
                         raise ValueError('Recurrent chunks must continue at the next position.')
-            states = [None]*len(self.blocks) if past_key_values is None else list(past_key_values)
-            outputs = []
-            for t in range(x.shape[1]):
-                current = x[:, t:t+1]
-                updated = []
-                for i, block in enumerate(self.blocks):
-                    current, state = block.recurrent_step(current, attention_positions[t:t+1], states[i])
-                    updated.append(state)
-                outputs.append(current)
-                states = updated
-            x = torch.cat(outputs, dim=1)
-            caches = states
+            if self.config.recurrent_execution == 'diagonal':
+                from diagonal_recurrent import execute
+                x, caches = execute(self, x, attention_positions, past_key_values)
+            else:
+                states = [None]*len(self.blocks) if past_key_values is None else list(past_key_values)
+                outputs = []
+                for t in range(x.shape[1]):
+                    current = x[:, t:t+1]
+                    updated = []
+                    for i, block in enumerate(self.blocks):
+                        current, state = block.recurrent_step(current, attention_positions[t:t+1], states[i])
+                        updated.append(state)
+                    outputs.append(current)
+                    states = updated
+                x = torch.cat(outputs, dim=1)
+                caches = states
         else:
             caches = []
             for i, block in enumerate(self.blocks):

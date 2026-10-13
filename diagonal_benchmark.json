@@ -1,0 +1,37 @@
+{
+  "batch": 16,
+  "sequence_length": 320,
+  "slots": 2,
+  "layers": 8,
+  "dtype": "float32",
+  "method": "One warmup and three timed retrieval forward/backward/clip/AdamW updates; same fixed batch, reset initial weights per thread setting. Single CPU benchmark, not a general speedup claim.",
+  "results": [
+    {
+      "threads": 1,
+      "median_update_seconds": 2.1021844669994607,
+      "update_seconds": [
+        2.6610272339985386,
+        2.043133487000887,
+        2.1021844669994607
+      ]
+    },
+    {
+      "threads": 2,
+      "median_update_seconds": 1.5563711400009197,
+      "update_seconds": [
+        1.7373770600006537,
+        1.5563711400009197,
+        1.5472939549999865
+      ]
+    },
+    {
+      "threads": 4,
+      "median_update_seconds": 1.4606319640006404,
+      "update_seconds": [
+        1.4606319640006404,
+        1.4770466059999308,
+        1.451474617000713
+      ]
+    }
+  ]
+}

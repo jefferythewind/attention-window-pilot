@@ -46,7 +46,9 @@ def train_one(job):
     model=WindowLM(WindowConfig(vocab_size=base.config.vocab_size,width=config['width'],
                                 layers=config['layers'],heads=config['heads'],window=condition['window'],
                                 max_positions=config['max_positions'],
-                                recurrent_attention_slot=condition.get('recurrent_attention_slot',False)))
+                                recurrent_attention_slot=condition.get('recurrent_attention_slot',False),
+                                recurrent_attention_slots=condition.get('recurrent_attention_slots',1),
+                                recurrent_execution=condition.get('recurrent_execution','sequential')))
     model.load_state_dict(initial); model.train()
     opt=config['optimizer']
     optimizer=torch.optim.AdamW([
@@ -92,7 +94,9 @@ def train_one(job):
     name=f'{task}-seed{seed}-{condition["name"]}'
     model.save_pretrained(WORKER['output']/name,safe_serialization=False)
     row={'task':task,'seed':seed,'condition':condition['name'],'training_mode':condition['mode'],
-         'window':condition['window'],'recurrent_attention_slot':condition.get('recurrent_attention_slot',False),'parameters':sum(p.numel() for p in model.parameters()),
+         'window':condition['window'],'recurrent_attention_slot':condition.get('recurrent_attention_slot',False),
+         'recurrent_attention_slots':condition.get('recurrent_attention_slots',1),
+         'recurrent_execution':condition.get('recurrent_execution','sequential'),'parameters':sum(p.numel() for p in model.parameters()),
          'initialization_sha256':digest(initial),'training_sequences_sha256':data_hash.hexdigest(),
          'training_labels_sha256':target_hash.hexdigest(),'processed_tokens':steps*batch*length,
          'supervised_targets':targets,'optimizer_updates':steps,'training_seconds':elapsed,
