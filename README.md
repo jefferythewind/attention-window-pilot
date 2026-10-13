@@ -46,3 +46,5 @@ Additional V1 measurements: [learning curves](figures/v1-learning-curves.png) an
 A [single-seed W=32 test on 320-token sequences](RESULTS-W32-HORIZON.md) puts the source 280 tokens away, beyond the sliding horizon of 248. Recurrent recall is 27.0% versus sliding’s 14.8%, with source-sensitive predictions and strong local recall: partial learned relay, not reliable exact retrieval.
 
 A [diagonal one-versus-two-slot comparison](RESULTS-LATERAL-SLOTS.md) scores 36.7% versus 28.1% at distance280, with changed-source accuracy39.5% versus24.2%. This is improved partial relay in one paired seed. [Architecture and correctness checks](DIAGONAL-LATERAL-DESIGN.md).
+
+The [three-slot extension](RESULTS-THREE-SLOTS.md), trained without rerunning controls, scores 22.7% at distance 280 versus two slots’ 36.7%. Local recall also declines; adding t−3 did not improve this one-seed, fixed-budget trial.

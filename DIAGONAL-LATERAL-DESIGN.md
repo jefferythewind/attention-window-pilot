@@ -31,3 +31,7 @@ Diagonal versus sequential floating-point reductions can differ slightly even wh
 ```
 
 Use a new output directory to retrain. The summary reads the preserved default results-lateral-slots/ measurements. No previous checkpoint binaries are required. Historical sequential one-slot and sliding results at280 are contextual references; the primary comparison is the freshly trained diagonal pair. One seed cannot establish across-seed reliability.
+
+## Three-slot extension
+
+`recurrent_attention_slots=3` adds the completed same-layer output at t−3 to the same softmax. The existing diagonal implementation supports the third history entry; its dependency comes from three diagonals earlier. [Three-slot results and reproduction](RESULTS-THREE-SLOTS.md) reuse the preserved controls and train only the new condition.

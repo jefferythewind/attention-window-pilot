@@ -1,4 +1,4 @@
-"""Two lateral slots and diagonal scheduling: independent reference and state checks."""
+"""One/two/three lateral slots and diagonal scheduling: independent reference and state checks."""
 import importlib.util
 import subprocess
 import tempfile
@@ -124,4 +124,4 @@ for enabled in (False,True):
  if enabled:assert gradient>1e-8 and influence>1e-8,(gradient,influence)
  else:assert gradient==0 and influence==0,(gradient,influence)
  print(f'Diagonal two-slot beyond-horizon enabled={enabled}: gradient={gradient:.6g}, influence={influence:.6g}')
-print('PASS: one/two/three slots match explicit joint-softmax outputs/gradients; diagonal/full/token/chunk equivalence; missing slots masked; causal/reset/bounds checks; t-2 forward/gradient influence; save/load; unchanged parameter keys.')
+print('PASS: one/two/three slots match explicit joint-softmax outputs/gradients; diagonal/full/token/chunk equivalence; missing slots masked; causal/reset/bounds checks; t-2/t-3 forward/gradient influence; save/load; unchanged parameter keys.')

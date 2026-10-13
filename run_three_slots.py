@@ -1,4 +1,4 @@
-"""Fresh diagonal-execution W32 pair, one versus two completed-output slots."""
+"""Train only the three-slot diagonal W32 model; reuse preserved controls."""
 import argparse
 from concurrent.futures import ProcessPoolExecutor
 import hashlib

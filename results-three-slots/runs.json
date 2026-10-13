@@ -1,0 +1,184 @@
+{
+  "config": {
+    "version": "Three lateral slots, diagonal execution; prior controls reused",
+    "sequence_length": 320,
+    "layers": 8,
+    "width": 48,
+    "heads": 4,
+    "max_positions": 512,
+    "seeds": [
+      515843
+    ],
+    "seed_selection": "First V1 seed, selected before this run; one exploratory pair, not a multi-seed conclusion.",
+    "training_data_seed_offset": 1000,
+    "validation_seed": 2026,
+    "batch_size": 16,
+    "text_steps": 200,
+    "probe_steps": 400,
+    "distances": [
+      8,
+      24,
+      48,
+      280
+    ],
+    "conditions": [
+      {
+        "name": "recurrent-3slot-diagonal",
+        "mode": "sliding",
+        "window": 32,
+        "recurrent_attention_slot": true,
+        "recurrent_attention_slots": 3,
+        "recurrent_execution": "diagonal"
+      }
+    ],
+    "optimizer": {
+      "name": "AdamW",
+      "peak_lr": 0.002,
+      "betas": [
+        0.9,
+        0.95
+      ],
+      "matrix_weight_decay": 0.1,
+      "min_lr_fraction": 0.1,
+      "warmup_steps": 20,
+      "grad_clip": 1.0
+    },
+    "dtype": "float32",
+    "threads_per_worker": 2,
+    "workers": 1
+  },
+  "source_sha256": {
+    "model.py": "803d2b10bb80c61a334a99e02b2243870e224bd91fe7c7c80f8c4564b0ff54f9",
+    "diagonal_recurrent.py": "f7e9558eb37ae4f86a4f033a7922d497aa24ee10d68f1a7d6a56e26860ac753b",
+    "run.py": "7a4f99943d8f6be03b7ffc453e847403d3212075f1ffebcabd787c06724d382e",
+    "chunk_control.py": "0e8fb45da5bd5563e46440976a427db6995f1129ec0f08baefe1a02f48827a05",
+    "run_recurrent.py": "7bceb8bdd94ed3e164d1a22ad01a560bb54a22784ed82b20e6570f94e8c057e4",
+    "recurrent_evaluation.py": "579e39fc1736c8c51e2b738dd6b868f52ac92ea8d27781c802c596e17a0a6add",
+    "run_three_slots.py": "f01c3d8a9597703e4fb7bf5879fc793c9e782dd57b8fb63679cb8b308ed25726",
+    "three_slots_config.json": "016d3159151b630825cd8b267c3f963c57328308c4322ef0c6a3e40841511b17"
+  },
+  "results": [
+    {
+      "task": "probe",
+      "seed": 515843,
+      "condition": "recurrent-3slot-diagonal",
+      "training_mode": "sliding",
+      "window": 32,
+      "recurrent_attention_slot": true,
+      "recurrent_attention_slots": 3,
+      "recurrent_execution": "diagonal",
+      "parameters": 252384,
+      "initialization_sha256": "61d8693a7034966499c2c5bab07be87dfd13f7bc44e501dabfec29650f28db57",
+      "training_sequences_sha256": "eefa1e49eeff879545f8372baddfbc0ba703e816e215fd57cabb7b89b1a03cc0",
+      "training_labels_sha256": "6761deb66f175d52d872a0e37e611f822b8b74a083ed6ba7e5670f52039bb21c",
+      "processed_tokens": 2048000,
+      "supervised_targets": 6400,
+      "optimizer_updates": 400,
+      "training_seconds": 1178.4726535549999,
+      "tokens_per_second": 1737.8426167310456,
+      "history": [
+        {
+          "step": 1,
+          "loss": 3.598158836364746
+        },
+        {
+          "step": 51,
+          "loss": 2.20017671585083
+        },
+        {
+          "step": 101,
+          "loss": 1.8477554321289062
+        },
+        {
+          "step": 151,
+          "loss": 1.6047637462615967
+        },
+        {
+          "step": 201,
+          "loss": 1.3004968166351318
+        },
+        {
+          "step": 251,
+          "loss": 1.1333190202713013
+        },
+        {
+          "step": 301,
+          "loss": 0.8872472047805786
+        },
+        {
+          "step": 351,
+          "loss": 0.6482197642326355
+        },
+        {
+          "step": 400,
+          "loss": 0.7471964359283447
+        }
+      ],
+      "rolling_metrics": {
+        "8": {
+          "accuracy": 0.89453125,
+          "answer_nll": 0.46081990003585815,
+          "recomputed_window_accuracy": 0.8125,
+          "counterfactual_accuracy": 0.87109375,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 7.155837535858154,
+          "mean_changed_source_logit_difference": 1.528563141822815,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_output_bytes": 1179648,
+          "cache_metadata_bytes": 2048,
+          "cache_total_logical_bytes": 25561088,
+          "cache_backing_storage_bytes": 25561152,
+          "cache_batch_size": 256
+        },
+        "24": {
+          "accuracy": 0.88671875,
+          "answer_nll": 0.4251898229122162,
+          "recomputed_window_accuracy": 0.77734375,
+          "counterfactual_accuracy": 0.87109375,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 7.119219779968262,
+          "mean_changed_source_logit_difference": 1.509052038192749,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_output_bytes": 1179648,
+          "cache_metadata_bytes": 2048,
+          "cache_total_logical_bytes": 25561088,
+          "cache_backing_storage_bytes": 25561152,
+          "cache_batch_size": 256
+        },
+        "48": {
+          "accuracy": 0.8515625,
+          "answer_nll": 0.4699144661426544,
+          "recomputed_window_accuracy": 0.12890625,
+          "counterfactual_accuracy": 0.91015625,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 7.500771999359131,
+          "mean_changed_source_logit_difference": 1.4258478879928589,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_output_bytes": 1179648,
+          "cache_metadata_bytes": 2048,
+          "cache_total_logical_bytes": 25561088,
+          "cache_backing_storage_bytes": 25561152,
+          "cache_batch_size": 256
+        },
+        "280": {
+          "accuracy": 0.2265625,
+          "answer_nll": 1.5988917350769043,
+          "recomputed_window_accuracy": 0.09765625,
+          "counterfactual_accuracy": 0.25,
+          "prediction_changed_fraction": 0.51953125,
+          "max_changed_source_logit_difference": 5.628364562988281,
+          "mean_changed_source_logit_difference": 0.85680091381073,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_output_bytes": 1179648,
+          "cache_metadata_bytes": 2048,
+          "cache_total_logical_bytes": 25561088,
+          "cache_backing_storage_bytes": 25561152,
+          "cache_batch_size": 256
+        }
+      },
+      "chunked_metrics": null,
+      "checkpoint": "probe-seed515843-recurrent-3slot-diagonal"
+    }
+  ],
+  "wall_seconds": 1245.9199867120005
+}
