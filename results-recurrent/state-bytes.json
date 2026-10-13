@@ -1,0 +1,65 @@
+{
+  "batch_size": 1,
+  "processed_tokens": 127,
+  "prefill_chunk_size": 16,
+  "dtype": "float32",
+  "description": "Tensor storage only; excludes model weights, allocator overhead and temporary activations. Logical dimensions and deduplicated backing allocations are distinct. No training required; contents do not affect shape/storage bytes.",
+  "results": [
+    {
+      "condition": "full-128",
+      "cache_kv_bytes": 390144,
+      "cache_recurrent_output_bytes": 0,
+      "cache_metadata_bytes": 8128,
+      "cache_total_logical_bytes": 398272,
+      "cache_backing_storage_bytes": 398272
+    },
+    {
+      "condition": "sliding-32",
+      "cache_kv_bytes": 95232,
+      "cache_recurrent_output_bytes": 0,
+      "cache_metadata_bytes": 1984,
+      "cache_total_logical_bytes": 97216,
+      "cache_backing_storage_bytes": 144256
+    },
+    {
+      "condition": "sliding-16",
+      "cache_kv_bytes": 46080,
+      "cache_recurrent_output_bytes": 0,
+      "cache_metadata_bytes": 960,
+      "cache_total_logical_bytes": 47040,
+      "cache_backing_storage_bytes": 94080
+    },
+    {
+      "condition": "sliding-8",
+      "cache_kv_bytes": 21504,
+      "cache_recurrent_output_bytes": 0,
+      "cache_metadata_bytes": 448,
+      "cache_total_logical_bytes": 21952,
+      "cache_backing_storage_bytes": 68992
+    },
+    {
+      "condition": "recurrent-32",
+      "cache_kv_bytes": 95232,
+      "cache_recurrent_output_bytes": 1536,
+      "cache_metadata_bytes": 2048,
+      "cache_total_logical_bytes": 98816,
+      "cache_backing_storage_bytes": 101952
+    },
+    {
+      "condition": "recurrent-16",
+      "cache_kv_bytes": 46080,
+      "cache_recurrent_output_bytes": 1536,
+      "cache_metadata_bytes": 1024,
+      "cache_total_logical_bytes": 48640,
+      "cache_backing_storage_bytes": 51776
+    },
+    {
+      "condition": "recurrent-8",
+      "cache_kv_bytes": 21504,
+      "cache_recurrent_output_bytes": 1536,
+      "cache_metadata_bytes": 512,
+      "cache_total_logical_bytes": 23552,
+      "cache_backing_storage_bytes": 26688
+    }
+  ]
+}

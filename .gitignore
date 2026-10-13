@@ -5,3 +5,6 @@ results-2x/*/pytorch_model.bin
 results-chunk/*/pytorch_model.bin
 results-2x-chunk/*/pytorch_model.bin
 results-v1/*/pytorch_model.bin
+results-recurrent/*/pytorch_model.bin
+results-recurrent/progress-*.json
+recurrent.log

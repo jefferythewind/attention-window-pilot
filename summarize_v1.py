@@ -148,7 +148,7 @@ readme += [
     f'Sliding-32 reaches 100% far-distance retrieval in {sliding_success}/6 seeds; full attention does so in {full_success}/6. Giving chunk-trained models the same rolling inference yields '+ms([r['rolling_metrics']['80']['accuracy'] for r in select('probe','chunk-32')],True)+'. This supports connected training on this task; it does not establish general capability equivalence. Seeds vary both initialization and training batches, and none are excluded. Learned positional coverage also differs under answer-only chunk supervision.', '',
     'W=32 retains **93 KiB versus 381 KiB** of KV tensors for the full baseline (24.4%, approximately one quarter). This measures retained KV memory, not total model memory or training cost. Eight layers impose a finite information horizon; the implementation uses dense attention masks.', '',
     '## Reproduce', '',
-    'The corpus is included. No GPU or account is required. The runner trains 60 models with three CPU workers and resumes completed runs.', '',
+    'The corpus is included. No GPU or account is required. Use a new output directory to rerun all 60 models; published metrics exclude checkpoints. The summary below reads the preserved V1 metrics.', '',
     '```bash',
     'git clone https://github.com/jefferythewind/attention-window-pilot.git',
     'cd attention-window-pilot',
@@ -158,9 +158,13 @@ readme += [
     'pip install transformers==4.57.6 numpy==2.5.4',
     'python checks.py',
     'python checks_chunk.py',
-    'python run_v1.py',
+    'python run_v1.py --output-dir results-v1-reproduction',
     'python summarize_v1.py',
     '```', '',
     '[Design and reproducibility](DESIGN.md) · [Full results and every seed](RESULTS-V1.md) · [Configuration](v1_config.json) · [Raw metrics](results-v1/runs.json) · [Earlier pilots](archive/PILOT-HISTORY.md)',
 ]
+if (ROOT/'RESULTS-TRAINING-COST.md').exists():
+    readme+=['', 'Additional V1 measurements: [learning curves](figures/v1-learning-curves.png) and [training time/memory](RESULTS-TRAINING-COST.md).']
+if (ROOT/'RESULTS-RECURRENT.md').exists():
+    readme+=['', '**Same-layer recurrent slot:** the default-off feature adds no parameters and retains one completed output per layer. In 36 matched new runs, recurrent-8 lowered text loss to 2.3035 ± 0.0056, but distance-80 recall remained near chance (14.3% ± 3.1%). The verified beyond-horizon path did not learn reliable retrieval at this budget. See [all seeds, timings and state sizes](RESULTS-RECURRENT.md) and [reproduction protocol](RECURRENT-DESIGN.md).']
 (ROOT/'README.md').write_text('\n'.join(readme)+'\n')

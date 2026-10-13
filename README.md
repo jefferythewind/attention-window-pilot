@@ -22,7 +22,7 @@ W=32 retains **93 KiB versus 381 KiB** of KV tensors for the full baseline (24.4
 
 ## Reproduce
 
-The corpus is included. No GPU or account is required. The runner trains 60 models with three CPU workers and resumes completed runs.
+The corpus is included. No GPU or account is required. Use a new output directory to rerun all 60 models; published metrics exclude checkpoints. The summary below reads the preserved V1 metrics.
 
 ```bash
 git clone https://github.com/jefferythewind/attention-window-pilot.git
@@ -33,8 +33,12 @@ pip install torch==2.14.1+cpu --index-url https://download.pytorch.org/whl/cpu
 pip install transformers==4.57.6 numpy==2.5.4
 python checks.py
 python checks_chunk.py
-python run_v1.py
+python run_v1.py --output-dir results-v1-reproduction
 python summarize_v1.py
 ```
 
 [Design and reproducibility](DESIGN.md) · [Full results and every seed](RESULTS-V1.md) · [Configuration](v1_config.json) · [Raw metrics](results-v1/runs.json) · [Earlier pilots](archive/PILOT-HISTORY.md)
+
+Additional V1 measurements: [learning curves](figures/v1-learning-curves.png) and [training time/memory](RESULTS-TRAINING-COST.md).
+
+**Same-layer recurrent slot:** the default-off feature adds no parameters and retains one completed output per layer. In 36 matched new runs, recurrent-8 lowered text loss to 2.3035 ± 0.0056, but distance-80 recall remained near chance (14.3% ± 3.1%). The verified beyond-horizon path did not learn reliable retrieval at this budget. See [all seeds, timings and state sizes](RESULTS-RECURRENT.md) and [reproduction protocol](RECURRENT-DESIGN.md).

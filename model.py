@@ -10,10 +10,11 @@ class WindowConfig(PretrainedConfig):
     model_type = 'window_pilot'
 
     def __init__(self, vocab_size=64, width=64, layers=4, heads=4,
-                 window=64, max_positions=512, **kwargs):
+                 window=64, max_positions=512, recurrent_attention_slot=False, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size, self.width, self.layers = vocab_size, width, layers
         self.heads, self.window, self.max_positions = heads, window, max_positions
+        self.recurrent_attention_slot = recurrent_attention_slot
         if window < 1 or layers < 1 or width % heads:
             raise ValueError('Positive window/layers and width divisible by heads required.')
 
@@ -51,6 +52,41 @@ class Block(nn.Module):
                      kp[-keep:] if keep else kp[:0])
         return x, cache
 
+    def recurrent_step(self, x, position, past=None):
+        """One token; ordinary input KVs and completed-output state stay separate.
+
+        State is (ordinary K, ordinary V, positions, completed output, next position).
+        No state is detached: training retains the entire temporal graph.
+        """
+        b, t, d = x.shape
+        if t != 1:
+            raise ValueError('recurrent_step expects exactly one token.')
+        q, k, v = self.qkv(self.ln1(x)).reshape(b, 1, 3, self.c.heads,
+                                              d//self.c.heads).permute(2, 0, 3, 1, 4)
+        kp = position
+        if past is not None:
+            k = torch.cat((past[0], k), dim=2)
+            v = torch.cat((past[1], v), dim=2)
+            kp = torch.cat((past[2], position))
+        # Ordinary cache contains W-1 past inputs, so current-token inclusion gives W.
+        keys, values = k, v
+        if past is not None:
+            kv = F.linear(self.ln1(past[3]), self.qkv.weight[d:], self.qkv.bias[d:])
+            extra_k, extra_v = kv.reshape(b, 1, 2, self.c.heads,
+                                         d//self.c.heads).permute(2, 0, 3, 1, 4)
+            keys = torch.cat((keys, extra_k), dim=2)
+            values = torch.cat((values, extra_v), dim=2)
+        # Every supplied ordinary position is causal and within W. The extra slot
+        # participates in the same softmax and is omitted at sequence start.
+        y = F.scaled_dot_product_attention(q, keys, values)
+        z = x + self.proj(y.transpose(1, 2).reshape(b, 1, d))
+        completed = z + self.mlp(self.ln2(z))
+        keep = self.c.window-1
+        state = (k[:, :, -keep:] if keep else k[:, :, :0],
+                 v[:, :, -keep:] if keep else v[:, :, :0],
+                 kp[-keep:] if keep else kp[:0], completed, position[-1]+1)
+        return completed, state
+
 
 class WindowLM(PreTrainedModel):
     config_class = WindowConfig
@@ -79,7 +115,9 @@ class WindowLM(PreTrainedModel):
             raise ValueError('Training must retain the complete sequence graph.')
         if position_ids is None:
             start = 0
-            if past_key_values is not None and past_key_values[0][2].numel():
+            if past_key_values is not None and self.config.recurrent_attention_slot:
+                start = int(past_key_values[0][4])
+            elif past_key_values is not None and past_key_values[0][2].numel():
                 start = int(past_key_values[0][2][-1]) + 1
             elif past_key_values is not None:
                 raise ValueError('Supply absolute position_ids for an empty cache (W=1).')
@@ -96,11 +134,35 @@ class WindowLM(PreTrainedModel):
         else:
             x = self.token(input_ids) + self.position(position_ids)[None, :, :]
             attention_positions = position_ids
-        caches = []
-        for i, block in enumerate(self.blocks):
-            x, cache = block(x, attention_positions,
-                             None if past_key_values is None else past_key_values[i], use_cache)
-            caches.append(cache)
+        if self.config.recurrent_attention_slot:
+            if not torch.all(attention_positions[1:]-attention_positions[:-1] == 1):
+                raise ValueError('Recurrent sequences need contiguous positions.')
+            if past_key_values is not None:
+                if len(past_key_values) != len(self.blocks):
+                    raise ValueError('Expected one recurrent state per layer.')
+                for state in past_key_values:
+                    if len(state) != 5 or state[3].shape != (x.shape[0], 1, self.config.width):
+                        raise ValueError('Invalid recurrent state or batch size.')
+                    if int(state[4]) != int(attention_positions[0]):
+                        raise ValueError('Recurrent chunks must continue at the next position.')
+            states = [None]*len(self.blocks) if past_key_values is None else list(past_key_values)
+            outputs = []
+            for t in range(x.shape[1]):
+                current = x[:, t:t+1]
+                updated = []
+                for i, block in enumerate(self.blocks):
+                    current, state = block.recurrent_step(current, attention_positions[t:t+1], states[i])
+                    updated.append(state)
+                outputs.append(current)
+                states = updated
+            x = torch.cat(outputs, dim=1)
+            caches = states
+        else:
+            caches = []
+            for i, block in enumerate(self.blocks):
+                x, cache = block(x, attention_positions,
+                                 None if past_key_values is None else past_key_values[i], use_cache)
+                caches.append(cache)
         logits = self.head(self.norm(x))
         loss = None if labels is None else F.cross_entropy(
             logits[:, :-1].reshape(-1, self.config.vocab_size), labels[:, 1:].reshape(-1),
