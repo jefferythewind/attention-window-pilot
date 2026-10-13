@@ -20,8 +20,8 @@ class WindowConfig(PretrainedConfig):
         self.recurrent_execution = recurrent_execution
         if recurrent_execution not in ('sequential', 'diagonal'):
             raise ValueError('recurrent_execution must be sequential or diagonal.')
-        if type(recurrent_attention_slots) is not int or recurrent_attention_slots not in (1, 2):
-            raise ValueError('recurrent_attention_slots must be 1 or 2.')
+        if type(recurrent_attention_slots) is not int or recurrent_attention_slots not in (1, 2, 3):
+            raise ValueError('recurrent_attention_slots must be 1, 2 or 3.')
         if window < 1 or layers < 1 or width % heads:
             raise ValueError('Positive window/layers and width divisible by heads required.')
 
@@ -63,7 +63,7 @@ class Block(nn.Module):
         """One token; ordinary input KVs and completed-output state stay separate.
 
         State is (ordinary K, ordinary V, positions, completed-output history,
-        next position). History is oldest first, with at most one or two entries.
+        next position). History is oldest first, with at most one, two or three entries.
         No state is detached: training retains the entire temporal graph.
         """
         b, t, d = x.shape
@@ -92,8 +92,8 @@ class Block(nn.Module):
         completed = z + self.mlp(self.ln2(z))
         keep = self.c.window-1
         history = completed
-        if self.c.recurrent_attention_slots == 2 and past is not None:
-            history = torch.cat((past[3], completed), dim=1)[:, -2:]
+        if self.c.recurrent_attention_slots > 1 and past is not None:
+            history = torch.cat((past[3], completed), dim=1)[:, -self.c.recurrent_attention_slots:]
         state = (k[:, :, -keep:] if keep else k[:, :, :0],
                  v[:, :, -keep:] if keep else v[:, :, :0],
                  kp[-keep:] if keep else kp[:0], history, position[-1]+1)

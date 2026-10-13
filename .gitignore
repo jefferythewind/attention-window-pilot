@@ -14,3 +14,6 @@ w32-horizon.log
 results-lateral-slots/*/pytorch_model.bin
 results-lateral-slots/progress-*.json
 lateral-slots.log
+results-three-slots/*/pytorch_model.bin
+results-three-slots/progress-*.json
+three-slots.log

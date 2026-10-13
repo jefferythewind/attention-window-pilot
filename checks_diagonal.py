@@ -40,7 +40,7 @@ torch.testing.assert_close(old_model(legacy_ids).logits,new_model(legacy_ids).lo
 old_model(legacy_ids,labels=legacy_ids).loss.backward();new_model(legacy_ids,labels=legacy_ids).loss.backward()
 for p,q in zip(old_model.parameters(),new_model.parameters()):torch.testing.assert_close(p.grad,q.grad,atol=0,rtol=0)
 
-for slots in (1,2):
+for slots in (1,2,3):
  for window in (1,3,16):
   for length in (1,2,9):
    cfg=dict(vocab_size=16,width=16,heads=2,layers=3,window=window,recurrent_attention_slot=True,recurrent_attention_slots=slots)
@@ -87,10 +87,19 @@ s[0,0,0].backward();assert old.grad[:,0].abs().sum()>1e-8
 changed=old.detach().clone();changed[:,0,0]+=.1
 altered,_=b.recurrent_step(x,torch.tensor([2]),(*past[:3],changed,past[4]))
 assert (s.detach()-altered).abs().max()>1e-8
+# Isolate the newly added t-3 state using the same controlled block.
+m.config.recurrent_attention_slots=3
+third=torch.randn(1,3,8,dtype=torch.double,requires_grad=True)
+past3=(*past[:3],third,torch.tensor(3))
+s3,_=b.recurrent_step(x,torch.tensor([3]),past3)
+s3[0,0,0].backward();assert third.grad[:,0].abs().sum()>1e-8
+changed3=third.detach().clone();changed3[:,0,0]+=.1
+altered3,_=b.recurrent_step(x,torch.tensor([3]),(*past3[:3],changed3,past3[4]))
+assert (s3.detach()-altered3).abs().max()>1e-8
 with tempfile.TemporaryDirectory() as path:
  diagonal.save_pretrained(path,safe_serialization=False)
  restored=WindowLM.from_pretrained(path).double().eval()
- assert restored.config.recurrent_attention_slots==2 and restored.config.recurrent_execution=='diagonal'
+ assert restored.config.recurrent_attention_slots==3 and restored.config.recurrent_execution=='diagonal'
  torch.testing.assert_close(diagonal(ids).logits,restored(ids).logits,atol=1e-7,rtol=1e-6)
 # End-to-end diagonal source path: distance4 > L(W-1)=2.
 torch.manual_seed(18)
@@ -115,4 +124,4 @@ for enabled in (False,True):
  if enabled:assert gradient>1e-8 and influence>1e-8,(gradient,influence)
  else:assert gradient==0 and influence==0,(gradient,influence)
  print(f'Diagonal two-slot beyond-horizon enabled={enabled}: gradient={gradient:.6g}, influence={influence:.6g}')
-print('PASS: one/two slots match explicit joint-softmax outputs/gradients; diagonal/full/token/chunk equivalence; missing slots masked; causal/reset/bounds checks; t-2 forward/gradient influence; save/load; unchanged parameter keys.')
+print('PASS: one/two/three slots match explicit joint-softmax outputs/gradients; diagonal/full/token/chunk equivalence; missing slots masked; causal/reset/bounds checks; t-2 forward/gradient influence; save/load; unchanged parameter keys.')
