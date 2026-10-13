@@ -167,4 +167,6 @@ if (ROOT/'RESULTS-TRAINING-COST.md').exists():
     readme+=['', 'Additional V1 measurements: [learning curves](figures/v1-learning-curves.png) and [training time/memory](RESULTS-TRAINING-COST.md).']
 if (ROOT/'RESULTS-RECURRENT.md').exists():
     readme+=['', '**Same-layer recurrent slot:** the default-off feature adds no parameters and retains one completed output per layer. In 36 matched new runs, recurrent-8 lowered text loss to 2.3035 ± 0.0056, but distance-80 recall remained near chance (14.3% ± 3.1%). The verified beyond-horizon path did not learn reliable retrieval at this budget. See [all seeds, timings and state sizes](RESULTS-RECURRENT.md) and [reproduction protocol](RECURRENT-DESIGN.md).']
+if (ROOT/'RESULTS-W32-HORIZON.md').exists():
+    readme+=['', 'A [single-seed W=32 test on 320-token sequences](RESULTS-W32-HORIZON.md) puts the source 280 tokens away, beyond the sliding horizon of 248. Recurrent recall is 27.0% versus sliding’s 14.8%, with source-sensitive predictions and strong local recall: partial learned relay, not reliable exact retrieval.']
 (ROOT/'README.md').write_text('\n'.join(readme)+'\n')

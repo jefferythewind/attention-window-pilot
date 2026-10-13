@@ -8,3 +8,6 @@ results-v1/*/pytorch_model.bin
 results-recurrent/*/pytorch_model.bin
 results-recurrent/progress-*.json
 recurrent.log
+results-w32-horizon/*/pytorch_model.bin
+results-w32-horizon/progress-*.json
+w32-horizon.log
