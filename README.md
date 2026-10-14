@@ -50,3 +50,5 @@ A [diagonal one-versus-two-slot comparison](RESULTS-LATERAL-SLOTS.md) scores 36.
 The [three-slot extension](RESULTS-THREE-SLOTS.md), trained without rerunning controls, scores 22.7% at distance 280 versus two slots’ 36.7%. Local recall also declines; adding t−3 did not improve this one-seed, fixed-budget trial.
 
 The [separate two-sweep top-layer architecture](RESULTS-TWO-SWEEP.md) is a separate top-only variant: it trains in 6.5 minutes and reaches 100% local recall, but distance-280 accuracy is 12.1% with no source-induced prediction changes. Common two-thread profiles show faster prefill/decoding than interleaved recurrence; [training memory, temporary grid and separate KV state](RESULTS-TWO-SWEEP.md) are reported explicitly.
+
+**Intended all-layer zigzag:** [full-window same-layer correction at every layer](RESULTS-ZIGZAG.md) feeds each corrected row into the next ordinary block. Distance-280 recall is 11.7%, with changed-source accuracy 14.8%. The top-only trial remains a separate variant; this distance exceeds the original horizon248 but lies within the extra U-only attention depth’s finite horizon496.

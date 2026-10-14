@@ -1,0 +1,117 @@
+{
+  "method": "Only the new saved checkpoint is profiled, in a fresh two-thread process. One fixed batch16 x 320 forward/backward with no optimizer update; two warmups, five prefills and twenty frozen-prefix one-token decodes. Parameter values remain bitwise unchanged. Row volumes use diagnostic grid instrumentation, not inference peak allocation.",
+  "source_git_commit": "6b513b4bff97e29563293ea329eea41a8cccfdc2",
+  "source_sha256": {
+    "measure_zigzag.py": "c6a53290bac499c722e5660e8cfe4c37f177d65e898395499e9338a10507b4b1",
+    "measure_two_sweep.py": "6d7b773c079185d0b85b307d7770287c52bd7fbe6a0720ec90fd5b3c4c76d513",
+    "model.py": "43074a649ad85b49c4fbfcfc0252e7b2426ccf2cd204d8bc13658db25b248cfb",
+    "zigzag.py": "caeb9b4a52f889faf346364589f19fa75159ea4668625b4d91bb617b469429b2",
+    "two_sweep.py": "1c9202d6004f5b516930f06af92bf162ab0dca2dfb8e728bae789b0ed6a70962",
+    "recurrent_evaluation.py": "839846e3e9357993a67ac06580f8403851ee503334c55103265058ebd9688d6c"
+  },
+  "hardware": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "cpu_quota": "400000 100000",
+    "memory_limit_bytes": "17179869184"
+  },
+  "results": [
+    {
+      "checkpoint": "/workspace/attention-pilot/results-zigzag/probe-seed515843-zigzag-all-layer-recurrent-w32",
+      "threads": 2,
+      "training_batch": 16,
+      "training_sequence_length": 320,
+      "training_forward_backward_seconds": 2.8436103220001314,
+      "fixed_batch_training_peak_process_rss_bytes": 1454460928,
+      "autograd_unique_saved_storage_bytes": 677171972,
+      "first_sweep_completed_grid_logical_bytes": null,
+      "first_sweep_completed_grid_retained_for_lateral": false,
+      "zigzag_U_row_logical_bytes": 983040,
+      "zigzag_U_all_rows_logical_volume_bytes": 7864320,
+      "zigzag_R_all_rows_logical_volume_bytes": 7864320,
+      "latencies_and_state_by_batch": {
+        "1": {
+          "prefill_length": 319,
+          "prefill_median_seconds": 0.2341594179997628,
+          "prefill_seconds": [
+            0.2317470769994543,
+            0.2341594179997628,
+            0.24056792499959556,
+            0.23637319099998422,
+            0.2311253879997821
+          ],
+          "decode_median_seconds": 0.0025901930002873996,
+          "decode_seconds": [
+            0.002594962999864947,
+            0.002968865999719128,
+            0.0026056699998662225,
+            0.002598162999674969,
+            0.0025953029999072896,
+            0.0024599700000180746,
+            0.002585423000709852,
+            0.0024352590007765684,
+            0.0024592990002929582,
+            0.0024639439998281887,
+            0.0024625360001664376,
+            0.0024827669994920143,
+            0.0028410799995981506,
+            0.0025728529999469174,
+            0.003625194000051124,
+            0.0028240680003364105,
+            0.0026042340005005826,
+            0.0024862849995770375,
+            0.0025349170000481536,
+            0.0029951149999760673
+          ],
+          "cache_kv_bytes": 95232,
+          "cache_recurrent_kv_bytes": 95232,
+          "cache_metadata_bytes": 3976,
+          "cache_total_logical_bytes": 194440,
+          "cache_backing_storage_bytes": 194440
+        },
+        "16": {
+          "prefill_length": 319,
+          "prefill_median_seconds": 0.45776925799964374,
+          "prefill_seconds": [
+            0.4578901989998485,
+            0.4595723439997528,
+            0.45776925799964374,
+            0.4556809230007275,
+            0.4540602159995615
+          ],
+          "decode_median_seconds": 0.004947968500346178,
+          "decode_seconds": [
+            0.005155305000698718,
+            0.005614783000055468,
+            0.005133743999977014,
+            0.0049223690002691,
+            0.004987841000001936,
+            0.004973568000423256,
+            0.005088244000035047,
+            0.004868830999839702,
+            0.004794934000528883,
+            0.005318774999977904,
+            0.005082970999865211,
+            0.005100071000015305,
+            0.005171513000277628,
+            0.004842620000090392,
+            0.004733241000394628,
+            0.0048622249996697064,
+            0.004830573000617733,
+            0.004899319000287505,
+            0.004696528999375005,
+            0.004914625999845157
+          ],
+          "cache_kv_bytes": 1523712,
+          "cache_recurrent_kv_bytes": 1523712,
+          "cache_metadata_bytes": 3976,
+          "cache_total_logical_bytes": 3051400,
+          "cache_backing_storage_bytes": 3051400
+        }
+      },
+      "torch": "2.14.1+cpu",
+      "python": "3.12.14",
+      "condition": "zigzag-all-layer-recurrent-w32"
+    }
+  ],
+  "source_revision_note": "Measurement engine/model files match the recorded commit; measure_zigzag.py was a then-untracked orchestration wrapper whose exact source hash is also recorded and is preserved in the repository."
+}
