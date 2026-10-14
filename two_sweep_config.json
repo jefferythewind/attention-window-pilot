@@ -1,0 +1,47 @@
+{
+  "version": "Two-sweep top-layer recurrence W32; preserved controls",
+  "sequence_length": 320,
+  "layers": 8,
+  "width": 48,
+  "heads": 4,
+  "max_positions": 512,
+  "seeds": [
+    515843
+  ],
+  "seed_selection": "First V1 seed, selected before this run; one exploratory pair, not a multi-seed conclusion.",
+  "training_data_seed_offset": 1000,
+  "validation_seed": 2026,
+  "batch_size": 16,
+  "text_steps": 200,
+  "probe_steps": 400,
+  "distances": [
+    8,
+    24,
+    48,
+    280
+  ],
+  "conditions": [
+    {
+      "name": "two-sweep-top-recurrent-w32",
+      "mode": "sliding",
+      "window": 32,
+      "two_sweep_recurrent": true,
+      "lateral_window": 32
+    }
+  ],
+  "optimizer": {
+    "name": "AdamW",
+    "peak_lr": 0.002,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "matrix_weight_decay": 0.1,
+    "min_lr_fraction": 0.1,
+    "warmup_steps": 20,
+    "grad_clip": 1.0
+  },
+  "dtype": "float32",
+  "threads_per_worker": 2,
+  "workers": 1
+}

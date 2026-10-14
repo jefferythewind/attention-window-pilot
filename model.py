@@ -11,10 +11,15 @@ class WindowConfig(PretrainedConfig):
 
     def __init__(self, vocab_size=64, width=64, layers=4, heads=4,
                  window=64, max_positions=512, recurrent_attention_slot=False,
-                 recurrent_attention_slots: int = 1, recurrent_execution='sequential', **kwargs):
+                 recurrent_attention_slots: int = 1, recurrent_execution='sequential',
+                 two_sweep_recurrent=False, lateral_window=None, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size, self.width, self.layers = vocab_size, width, layers
         self.heads, self.window, self.max_positions = heads, window, max_positions
+        self.two_sweep_recurrent = two_sweep_recurrent
+        self.lateral_window = window if lateral_window is None else lateral_window
+        if self.lateral_window < 1 or (two_sweep_recurrent and recurrent_attention_slot):
+            raise ValueError('Positive lateral window required; two-sweep and interleaved recurrence are exclusive.')
         self.recurrent_attention_slot = recurrent_attention_slot
         self.recurrent_attention_slots = recurrent_attention_slots
         self.recurrent_execution = recurrent_execution
@@ -127,7 +132,9 @@ class WindowLM(PreTrainedModel):
             raise ValueError('Training must retain the complete sequence graph.')
         if position_ids is None:
             start = 0
-            if past_key_values is not None and self.config.recurrent_attention_slot:
+            if past_key_values is not None and self.config.two_sweep_recurrent:
+                start = int(past_key_values['next_position'])
+            elif past_key_values is not None and self.config.recurrent_attention_slot:
                 start = int(past_key_values[0][4])
             elif past_key_values is not None and past_key_values[0][2].numel():
                 start = int(past_key_values[0][2][-1]) + 1
@@ -146,7 +153,10 @@ class WindowLM(PreTrainedModel):
         else:
             x = self.token(input_ids) + self.position(position_ids)[None, :, :]
             attention_positions = position_ids
-        if self.config.recurrent_attention_slot:
+        if self.config.two_sweep_recurrent:
+            from two_sweep import execute
+            x, caches = execute(self, x, attention_positions, past_key_values, use_cache)
+        elif self.config.recurrent_attention_slot:
             if not torch.all(attention_positions[1:]-attention_positions[:-1] == 1):
                 raise ValueError('Recurrent sequences need contiguous positions.')
             if past_key_values is not None:
@@ -187,4 +197,4 @@ class WindowLM(PreTrainedModel):
             logits[:, :-1].reshape(-1, self.config.vocab_size), labels[:, 1:].reshape(-1),
             ignore_index=-100)
         return CausalLMOutputWithPast(loss=loss, logits=logits,
-                                     past_key_values=tuple(caches) if use_cache else None)
+                                     past_key_values=(caches if self.config.two_sweep_recurrent else tuple(caches)) if use_cache else None)

@@ -5,6 +5,9 @@ import torch
 
 
 def state_bytes(cache):
+    if isinstance(cache,dict):
+        from two_sweep import state_bytes as two_sweep_state_bytes
+        return two_sweep_state_bytes(cache)
     kv=sum(s[0].numel()*s[0].element_size()+s[1].numel()*s[1].element_size() for s in cache)
     recurrent=sum(s[3].numel()*s[3].element_size() for s in cache if len(s)==5)
     metadata=sum(s[2].numel()*s[2].element_size()+(s[4].numel()*s[4].element_size() if len(s)==5 else 0) for s in cache)

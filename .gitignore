@@ -17,3 +17,6 @@ lateral-slots.log
 results-three-slots/*/pytorch_model.bin
 results-three-slots/progress-*.json
 three-slots.log
+results-two-sweep/*/pytorch_model.bin
+results-two-sweep/progress-*.json
+two-sweep.log
