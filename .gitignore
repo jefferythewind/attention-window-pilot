@@ -20,3 +20,8 @@ three-slots.log
 results-two-sweep/*/pytorch_model.bin
 results-two-sweep/progress-*.json
 two-sweep.log
+two-sweep-costs.log
+results-zigzag/*/pytorch_model.bin
+results-zigzag/progress-*.json
+zigzag.log
+zigzag-costs.log

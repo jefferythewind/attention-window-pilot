@@ -1,0 +1,191 @@
+{
+  "config": {
+    "version": "Two-sweep top-layer recurrence W32; preserved controls",
+    "sequence_length": 320,
+    "layers": 8,
+    "width": 48,
+    "heads": 4,
+    "max_positions": 512,
+    "seeds": [
+      515843
+    ],
+    "seed_selection": "First V1 seed, selected before this run; one exploratory pair, not a multi-seed conclusion.",
+    "training_data_seed_offset": 1000,
+    "validation_seed": 2026,
+    "batch_size": 16,
+    "text_steps": 200,
+    "probe_steps": 400,
+    "distances": [
+      8,
+      24,
+      48,
+      280
+    ],
+    "conditions": [
+      {
+        "name": "two-sweep-top-recurrent-w32",
+        "mode": "sliding",
+        "window": 32,
+        "two_sweep_recurrent": true,
+        "lateral_window": 32
+      }
+    ],
+    "optimizer": {
+      "name": "AdamW",
+      "peak_lr": 0.002,
+      "betas": [
+        0.9,
+        0.95
+      ],
+      "matrix_weight_decay": 0.1,
+      "min_lr_fraction": 0.1,
+      "warmup_steps": 20,
+      "grad_clip": 1.0
+    },
+    "dtype": "float32",
+    "threads_per_worker": 2,
+    "workers": 1
+  },
+  "source_sha256": {
+    "model.py": "3f83a10143708f85178d2f3a0efa96a23806e1f2377138abea01a57b244a1df3",
+    "two_sweep.py": "1c9202d6004f5b516930f06af92bf162ab0dca2dfb8e728bae789b0ed6a70962",
+    "diagonal_recurrent.py": "f7e9558eb37ae4f86a4f033a7922d497aa24ee10d68f1a7d6a56e26860ac753b",
+    "run.py": "7a4f99943d8f6be03b7ffc453e847403d3212075f1ffebcabd787c06724d382e",
+    "chunk_control.py": "0e8fb45da5bd5563e46440976a427db6995f1129ec0f08baefe1a02f48827a05",
+    "run_recurrent.py": "5ffc63d574fbc8c3462de9b68a7a50ebb0f9b73afc2d0a7f950aaef16656e9fc",
+    "recurrent_evaluation.py": "58ab35d7deddc3c748e60e6b2b1a76bcf0c70d02d0b353450369ca0784eda28b",
+    "run_two_sweep.py": "50b0d4ca7e1598f39c070bfeb981a4218cceedbc9f50fbe9a74180454be03a02",
+    "two_sweep_config.json": "a8eb31d522ecc0ed62956dc2f422770414908abdef453bc98eefc83c827f75c4"
+  },
+  "results": [
+    {
+      "task": "probe",
+      "seed": 515843,
+      "condition": "two-sweep-top-recurrent-w32",
+      "training_mode": "sliding",
+      "window": 32,
+      "recurrent_attention_slot": false,
+      "recurrent_attention_slots": 1,
+      "two_sweep_recurrent": true,
+      "lateral_window": 32,
+      "training_peak_process_rss_bytes": 756543488,
+      "recurrent_execution": "sequential",
+      "parameters": 252384,
+      "initialization_sha256": "61d8693a7034966499c2c5bab07be87dfd13f7bc44e501dabfec29650f28db57",
+      "training_sequences_sha256": "eefa1e49eeff879545f8372baddfbc0ba703e816e215fd57cabb7b89b1a03cc0",
+      "training_labels_sha256": "6761deb66f175d52d872a0e37e611f822b8b74a083ed6ba7e5670f52039bb21c",
+      "processed_tokens": 2048000,
+      "supervised_targets": 6400,
+      "optimizer_updates": 400,
+      "training_seconds": 387.73141419699914,
+      "tokens_per_second": 5282.006886755504,
+      "history": [
+        {
+          "step": 1,
+          "loss": 3.625128746032715
+        },
+        {
+          "step": 51,
+          "loss": 2.204847574234009
+        },
+        {
+          "step": 101,
+          "loss": 2.023326873779297
+        },
+        {
+          "step": 151,
+          "loss": 1.6007044315338135
+        },
+        {
+          "step": 201,
+          "loss": 1.517555594444275
+        },
+        {
+          "step": 251,
+          "loss": 1.2449333667755127
+        },
+        {
+          "step": 301,
+          "loss": 0.8135889768600464
+        },
+        {
+          "step": 351,
+          "loss": 0.37915050983428955
+        },
+        {
+          "step": 400,
+          "loss": 0.6505085229873657
+        }
+      ],
+      "rolling_metrics": {
+        "8": {
+          "accuracy": 1.0,
+          "answer_nll": 0.1345495730638504,
+          "recomputed_window_accuracy": 1.0,
+          "counterfactual_accuracy": 1.0,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 6.387966156005859,
+          "mean_changed_source_logit_difference": 0.8808838725090027,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_kv_bytes": 3047424,
+          "cache_metadata_bytes": 2240,
+          "cache_total_logical_bytes": 27429056,
+          "cache_backing_storage_bytes": 27429056,
+          "cache_batch_size": 256
+        },
+        "24": {
+          "accuracy": 1.0,
+          "answer_nll": 0.13450327515602112,
+          "recomputed_window_accuracy": 1.0,
+          "counterfactual_accuracy": 1.0,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 6.41100549697876,
+          "mean_changed_source_logit_difference": 1.1603628396987915,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_kv_bytes": 3047424,
+          "cache_metadata_bytes": 2240,
+          "cache_total_logical_bytes": 27429056,
+          "cache_backing_storage_bytes": 27429056,
+          "cache_batch_size": 256
+        },
+        "48": {
+          "accuracy": 1.0,
+          "answer_nll": 0.1353427618741989,
+          "recomputed_window_accuracy": 0.08984375,
+          "counterfactual_accuracy": 1.0,
+          "prediction_changed_fraction": 1.0,
+          "max_changed_source_logit_difference": 6.199962615966797,
+          "mean_changed_source_logit_difference": 0.9785733222961426,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_kv_bytes": 3047424,
+          "cache_metadata_bytes": 2240,
+          "cache_total_logical_bytes": 27429056,
+          "cache_backing_storage_bytes": 27429056,
+          "cache_batch_size": 256
+        },
+        "280": {
+          "accuracy": 0.12109375,
+          "answer_nll": 2.0836002826690674,
+          "recomputed_window_accuracy": 0.12109375,
+          "counterfactual_accuracy": 0.09765625,
+          "prediction_changed_fraction": 0.0,
+          "max_changed_source_logit_difference": 2.86102294921875e-06,
+          "mean_changed_source_logit_difference": 6.530899554491043e-08,
+          "cache_kv_bytes": 24379392,
+          "cache_recurrent_kv_bytes": 3047424,
+          "cache_metadata_bytes": 2240,
+          "cache_total_logical_bytes": 27429056,
+          "cache_backing_storage_bytes": 27429056,
+          "cache_batch_size": 256
+        }
+      },
+      "chunked_metrics": null,
+      "checkpoint": "probe-seed515843-two-sweep-top-recurrent-w32"
+    }
+  ],
+  "wall_seconds": 411.99641090099976,
+  "source_git_commit": "419750ad7cc951f6a6a2905a71f39f2ad4daece4",
+  "torch": "2.14.1+cpu",
+  "transformers": "4.57.6",
+  "python": "3.12.14"
+}

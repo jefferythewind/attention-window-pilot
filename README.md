@@ -48,3 +48,5 @@ A [single-seed W=32 test on 320-token sequences](RESULTS-W32-HORIZON.md) puts th
 A [diagonal one-versus-two-slot comparison](RESULTS-LATERAL-SLOTS.md) scores 36.7% versus 28.1% at distance280, with changed-source accuracy39.5% versus24.2%. This is improved partial relay in one paired seed. [Architecture and correctness checks](DIAGONAL-LATERAL-DESIGN.md).
 
 The [three-slot extension](RESULTS-THREE-SLOTS.md), trained without rerunning controls, scores 22.7% at distance 280 versus two slots’ 36.7%. Local recall also declines; adding t−3 did not improve this one-seed, fixed-budget trial.
+
+The [separate two-sweep top-layer architecture](RESULTS-TWO-SWEEP.md) is a separate top-only variant: it trains in 6.5 minutes and reaches 100% local recall, but distance-280 accuracy is 12.1% with no source-induced prediction changes. Common two-thread profiles show faster prefill/decoding than interleaved recurrence; [training memory, temporary grid and separate KV state](RESULTS-TWO-SWEEP.md) are reported explicitly.

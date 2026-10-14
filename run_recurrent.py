@@ -51,6 +51,7 @@ def train_one(job):
                                 recurrent_attention_slots=condition.get('recurrent_attention_slots',1),
                                 recurrent_execution=condition.get('recurrent_execution','sequential'),
                                 two_sweep_recurrent=condition.get('two_sweep_recurrent',False),
+                                zigzag_recurrent=condition.get('zigzag_recurrent',False),
                                 lateral_window=condition.get('lateral_window',condition['window'])))
     model.load_state_dict(initial); model.train()
     opt=config['optimizer']
@@ -89,7 +90,7 @@ def train_one(job):
     validation=WORKER['validations'][task]
     rolling=evaluate(model,task,validation)
     native=None
-    if condition['window']==32 and not condition.get('recurrent_attention_slot',False) and not condition.get('two_sweep_recurrent',False):
+    if condition['window']==32 and not condition.get('recurrent_attention_slot',False) and not condition.get('two_sweep_recurrent',False) and not condition.get('zigzag_recurrent',False):
         native=evaluate_chunked(model,task,validation,32)
         if task=='probe':
             for d in config['distances']:
@@ -101,6 +102,7 @@ def train_one(job):
          'window':condition['window'],'recurrent_attention_slot':condition.get('recurrent_attention_slot',False),
          'recurrent_attention_slots':condition.get('recurrent_attention_slots',1),
          'two_sweep_recurrent':condition.get('two_sweep_recurrent',False),
+         'zigzag_recurrent':condition.get('zigzag_recurrent',False),
          'lateral_window':condition.get('lateral_window',condition['window']),
          'training_peak_process_rss_bytes':training_peak_rss_bytes,
          'recurrent_execution':condition.get('recurrent_execution','sequential'),'parameters':sum(p.numel() for p in model.parameters()),

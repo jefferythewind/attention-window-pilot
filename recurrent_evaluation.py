@@ -5,6 +5,9 @@ import torch
 
 
 def state_bytes(cache):
+    if isinstance(cache,dict) and 'recurrent_layers' in cache:
+        from zigzag import state_bytes as zigzag_state_bytes
+        return zigzag_state_bytes(cache)
     if isinstance(cache,dict):
         from two_sweep import state_bytes as two_sweep_state_bytes
         return two_sweep_state_bytes(cache)

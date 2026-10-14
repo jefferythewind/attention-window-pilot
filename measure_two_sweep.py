@@ -41,12 +41,22 @@ def worker(checkpoint):
     model.zero_grad(set_to_none=True);model.eval()
     # Logical completed-U grid, separately from full autograd saved storage.
     ordinary_grid_bytes=None
+    zigzag_u_volume=None;zigzag_r_volume=None;zigzag_u_row=None
     if model.config.two_sweep_recurrent:
         with torch.no_grad():
             embedded=model.token(x)+model.position(torch.arange(320))[None]
             grid,_=ordinary_sweep(model,embedded,torch.arange(320))
             ordinary_grid_bytes=sum(u.numel()*u.element_size() for u in grid)
             del grid,embedded
+    if model.config.zigzag_recurrent:
+        from zigzag import grid_sweep
+        with torch.no_grad():
+            embedded=model.token(x)+model.position(torch.arange(320))[None]
+            _,_,_,ug,rg=grid_sweep(model,embedded,torch.arange(320),record_grid=True)
+            zigzag_u_volume=sum(t.numel()*t.element_size() for t in ug)
+            zigzag_r_volume=sum(t.numel()*t.element_size() for t in rg)
+            zigzag_u_row=ug[0].numel()*ug[0].element_size()
+            del ug,rg,embedded
     timings={}
     with torch.no_grad():
         for batch in (1,16):
@@ -70,6 +80,8 @@ def worker(checkpoint):
         'fixed_batch_training_peak_process_rss_bytes':peak_training_rss,'autograd_unique_saved_storage_bytes':saved_bytes,
         'first_sweep_completed_grid_logical_bytes':ordinary_grid_bytes,
         'first_sweep_completed_grid_retained_for_lateral':bool(model.config.two_sweep_recurrent),
+        'zigzag_U_row_logical_bytes':zigzag_u_row,'zigzag_U_all_rows_logical_volume_bytes':zigzag_u_volume,
+        'zigzag_R_all_rows_logical_volume_bytes':zigzag_r_volume,
         'latencies_and_state_by_batch':timings,'torch':torch.__version__,'python':platform.python_version()}
 
 
